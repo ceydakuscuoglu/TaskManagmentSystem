@@ -61,6 +61,28 @@ public class TaskController : ControllerBase
         return Ok(tasks);
     }
 
+    [HttpGet("completedTasks")]
+    public IActionResult ListCompletedTasks() // List completed tasks
+    {
+        var completedTasks = _context.Tasks
+            .Where(t => t.Task_Status == Task.TaskStatus.Completed)
+            .Select(t => new
+            {
+                t.ID,
+                t.Task_Title,
+                t.Description,
+                TaskStatus = t.Task_Status.ToString(),
+                AssignedUser = t.User.First_Name + " " + t.User.Last_Name,
+                CreatedBy = t.User.First_Name + " " + t.User.Last_Name,
+                DepartmentName = t.User.Department.Department_Name,
+                TotalTimeTaken = t.Updated_At.HasValue && t.Created_At.HasValue
+    ? (t.Updated_At.Value - t.Created_At.Value).Days + " day " + (t.Updated_At.Value - t.Created_At.Value).Hours + " hour"
+    : (DateTime.UtcNow - (t.Created_At ?? DateTime.UtcNow)).Days + " day " + (DateTime.UtcNow - (t.Created_At ?? DateTime.UtcNow)).Hours + " hour"
+            })
+            .ToList();
+        return Ok(completedTasks);
+    }
+
     [HttpGet("detail/{taskId}")]
     public IActionResult TaskDetail(Guid taskId) //returns detailed information about a specific task
     {
@@ -103,7 +125,8 @@ public class TaskController : ControllerBase
         var user = _context.Users.Find(currentUser);
         if (!AuthHelper.IsUserAuthorizedForTask(task, user))
             return Unauthorized();
-
+        if (task.Task_Status != Task.TaskStatus.Pending)
+            return BadRequest("Only pending tasks can be approved.");
         task.Task_Status = Task.TaskStatus.Approved;
         task.Updated_By = currentUser;
         task.Updated_At = DateTime.UtcNow;
@@ -121,6 +144,8 @@ public class TaskController : ControllerBase
         var user = _context.Users.Find(currentUser);
         if (!AuthHelper.IsUserAuthorizedForTask(task, user))
             return Unauthorized();
+        if (task.Task_Status != Task.TaskStatus.Pending)
+            return BadRequest("Only pending tasks can be rejected.");
         task.Task_Status = Task.TaskStatus.Rejected;
         task.Updated_By = currentUser;
         task.Updated_At = DateTime.UtcNow;
@@ -169,7 +194,8 @@ public class TaskController : ControllerBase
         var user = _context.Users.Find(userId);
         if (!AuthHelper.IsUserAuthorizedForTask(task, user))
             return Unauthorized();
-
+        if (task.Task_Status != Task.TaskStatus.Approved)
+            return BadRequest("Only approved tasks can be marked as completed.");
         task.Task_Status = Task.TaskStatus.Completed;
         task.Updated_By = userId;
         task.Updated_At = DateTime.UtcNow;
@@ -189,6 +215,8 @@ public class TaskController : ControllerBase
         if (!AuthHelper.IsUserAuthorizedForTask(task, user, checkOwnership: true))
             return Unauthorized("Only the task owner can update the task.");
 
+        if (task.Task_Status == Task.TaskStatus.Completed || task.Task_Status == Task.TaskStatus.Rejected)
+            return BadRequest("Completed or rejected tasks cannot be updated.");
         task.Task_Title = updateData.Task_Title;
         task.Description = updateData.Description;
         task.Task_Status = updateData.Task_Status;

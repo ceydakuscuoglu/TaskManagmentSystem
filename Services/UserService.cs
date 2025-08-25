@@ -64,6 +64,7 @@ public class UserController : ControllerBase
             Password = request.Password,
             Phone_Number = request.Phone_Number,
             DepartmentID = request.DepartmentID,
+            Title = request.Title,
             Created_At = DateTime.UtcNow
         };
 
