@@ -163,3 +163,4 @@ C:\Users\ceyda\OneDrive\Masaüstü\TaskManagmentSystem\TaskManagmentSystem\bin\D
 C:\Users\ceyda\OneDrive\Masaüstü\TaskManagmentSystem\TaskManagmentSystem\bin\Debug\net9.0\Swashbuckle.AspNetCore.Swagger.dll
 C:\Users\ceyda\OneDrive\Masaüstü\TaskManagmentSystem\TaskManagmentSystem\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerGen.dll
 C:\Users\ceyda\OneDrive\Masaüstü\TaskManagmentSystem\TaskManagmentSystem\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerUI.dll
+C:\Users\ceyda\OneDrive\Masaüstü\TaskManagmentSystem\TaskManagmentSystem\obj\Debug\net9.0\TaskManagmentSystem.sourcelink.json

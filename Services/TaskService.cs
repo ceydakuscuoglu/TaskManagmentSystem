@@ -83,6 +83,9 @@ public class TaskController : ControllerBase
     [HttpPost("create")]
     public IActionResult CreateTask(Task task, Guid currentUserId) // Create a new task
     {
+        if (currentUserId == Guid.Empty)
+            return BadRequest("Current user ID cannot be null or empty.");
+
         task.Task_Status = Task.TaskStatus.Pending;
         task.Created_By = currentUserId;
         task.Created_At = DateTime.UtcNow;
@@ -97,9 +100,8 @@ public class TaskController : ControllerBase
     {
         var task = _context.Tasks.Find(taskId);
         if (task == null) return NotFound();
-        var user = _context.Users
-            .FirstOrDefault(u => u.ID == currentUser);
-        if (!AuthorizationHelper.IsAssigneeOrSameDepartment(task, user))
+        var user = _context.Users.Find(currentUser);
+        if (!AuthHelper.IsUserAuthorizedForTask(task, user))
             return Unauthorized();
 
         task.Task_Status = Task.TaskStatus.Approved;
@@ -116,9 +118,8 @@ public class TaskController : ControllerBase
         var task = _context.Tasks.Find(taskId);
         if (task == null) return NotFound();
 
-        var user = _context.Users
-                 .FirstOrDefault(u => u.ID == currentUser);
-        if (!AuthorizationHelper.IsAssigneeOrSameDepartment(task, user))
+        var user = _context.Users.Find(currentUser);
+        if (!AuthHelper.IsUserAuthorizedForTask(task, user))
             return Unauthorized();
         task.Task_Status = Task.TaskStatus.Rejected;
         task.Updated_By = currentUser;
@@ -137,8 +138,6 @@ public class TaskController : ControllerBase
         var tasks = _context.Tasks
             .Include(t => t.User)
                 .ThenInclude(u => u.Department)
-            .Include(t => t.User)
-            .Include(t => t.User)
             .Where(t => t.User.ID == userId || t.User.DepartmentID == user.DepartmentID)
             .Select(t => new
             {
@@ -167,9 +166,8 @@ public class TaskController : ControllerBase
 
         if (task == null) return NotFound();
 
-        var user = _context.Users
-          .FirstOrDefault(u => u.ID == userId);
-        if (!AuthorizationHelper.IsAssigneeOrSameDepartment(task, user))
+        var user = _context.Users.Find(userId);
+        if (!AuthHelper.IsUserAuthorizedForTask(task, user))
             return Unauthorized();
 
         task.Task_Status = Task.TaskStatus.Completed;
@@ -187,9 +185,8 @@ public class TaskController : ControllerBase
         var task = _context.Tasks.Find(taskId);
         if (task == null) return NotFound("Task not found.");
 
-        var user = _context.Users
-                 .FirstOrDefault(u => u.ID == userId);
-        if (!AuthorizationHelper.IsTaskOwner(task, user))
+        var user = _context.Users.Find(userId);
+        if (!AuthHelper.IsUserAuthorizedForTask(task, user, checkOwnership: true))
             return Unauthorized("Only the task owner can update the task.");
 
         task.Task_Title = updateData.Task_Title;
@@ -208,10 +205,9 @@ public class TaskController : ControllerBase
         var task = _context.Tasks.Find(taskId);
         if (task == null) return NotFound("Task not found.");
 
-        var user = _context.Users
-                 .FirstOrDefault(u => u.ID == userId);
-        if (!AuthorizationHelper.IsTaskOwner(task, user))
-            return Unauthorized("Only the task owner can update the task.");
+        var user = _context.Users.Find(userId);
+        if (!AuthHelper.IsUserAuthorizedForTask(task, user, checkOwnership: true))
+            return Unauthorized("Only the task owner can delete the task.");
 
         task.Deleted_At = DateTime.UtcNow;
         task.Deleted_By = userId;
