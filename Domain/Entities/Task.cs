@@ -13,6 +13,9 @@ public class Task : BaseEntity
 
     public TaskStatus Task_Status { get; set; }
 
+    public DateTime? Approved_At { get; set; } = null;
+    public DateTime? Completed_At { get; set; } = null;
+
     public enum TaskStatus
     {
         Pending,

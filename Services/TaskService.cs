@@ -75,9 +75,11 @@ public class TaskController : ControllerBase
                 AssignedUser = t.User.First_Name + " " + t.User.Last_Name,
                 CreatedBy = t.User.First_Name + " " + t.User.Last_Name,
                 DepartmentName = t.User.Department.Department_Name,
-                TotalTimeTaken = t.Updated_At.HasValue && t.Created_At.HasValue
-    ? (t.Updated_At.Value - t.Created_At.Value).Days + " day " + (t.Updated_At.Value - t.Created_At.Value).Hours + " hour"
-    : (DateTime.UtcNow - (t.Created_At ?? DateTime.UtcNow)).Days + " day " + (DateTime.UtcNow - (t.Created_At ?? DateTime.UtcNow)).Hours + " hour"
+                TotalTimeTaken = t.Approved_At.HasValue && t.Completed_At.HasValue
+    ? (t.Completed_At.Value - t.Approved_At.Value).Days + " day "
+        + (t.Completed_At.Value - t.Approved_At.Value).Hours + " hour "
+        + (t.Completed_At.Value - t.Approved_At.Value).Minutes + " minute"
+    : null
             })
             .ToList();
         return Ok(completedTasks);
@@ -120,14 +122,18 @@ public class TaskController : ControllerBase
     [HttpPut("approve/{taskId}/{currentUser}")]
     public IActionResult ApproveTask(Guid taskId, Guid currentUser) // Approve a task
     {
-        var task = _context.Tasks.Find(taskId);
+        var task = _context.Tasks
+     .Include(t => t.User)
+     .ThenInclude(u => u.Department)
+     .FirstOrDefault(t => t.ID == taskId);
         if (task == null) return NotFound();
         var user = _context.Users.Find(currentUser);
-        if (!AuthHelper.IsUserAuthorizedForTask(task, user))
+        if (!AuthHelper.IsAssigneeOrSameDepartment(task, user))
             return Unauthorized();
         if (task.Task_Status != Task.TaskStatus.Pending)
             return BadRequest("Only pending tasks can be approved.");
         task.Task_Status = Task.TaskStatus.Approved;
+        task.Approved_At = DateTime.UtcNow;
         task.Updated_By = currentUser;
         task.Updated_At = DateTime.UtcNow;
         _context.SaveChanges();
@@ -138,11 +144,14 @@ public class TaskController : ControllerBase
     [HttpPut("reject/{taskId}/{currentUser}")]
     public IActionResult RejectTask(Guid taskId, Guid currentUser) // Reject a task
     {
-        var task = _context.Tasks.Find(taskId);
+        var task = _context.Tasks
+    .Include(t => t.User)
+    .ThenInclude(u => u.Department)
+    .FirstOrDefault(t => t.ID == taskId);
         if (task == null) return NotFound();
 
         var user = _context.Users.Find(currentUser);
-        if (!AuthHelper.IsUserAuthorizedForTask(task, user))
+        if (!AuthHelper.IsAssigneeOrSameDepartment(task, user))
             return Unauthorized();
         if (task.Task_Status != Task.TaskStatus.Pending)
             return BadRequest("Only pending tasks can be rejected.");
@@ -186,17 +195,19 @@ public class TaskController : ControllerBase
     public IActionResult CompleteTask(Guid taskId, Guid userId) // Complete a task
     {
         var task = _context.Tasks
-            .Include(t => t.User)
-            .FirstOrDefault(t => t.ID == taskId);
+     .Include(t => t.User)
+     .ThenInclude(u => u.Department)
+     .FirstOrDefault(t => t.ID == taskId);
 
         if (task == null) return NotFound();
 
         var user = _context.Users.Find(userId);
-        if (!AuthHelper.IsUserAuthorizedForTask(task, user))
+        if (!AuthHelper.IsAssigneeOrSameDepartment(task, user))
             return Unauthorized();
         if (task.Task_Status != Task.TaskStatus.Approved)
             return BadRequest("Only approved tasks can be marked as completed.");
         task.Task_Status = Task.TaskStatus.Completed;
+        task.Completed_At = DateTime.UtcNow;
         task.Updated_By = userId;
         task.Updated_At = DateTime.UtcNow;
         _context.SaveChanges();
@@ -212,7 +223,7 @@ public class TaskController : ControllerBase
         if (task == null) return NotFound("Task not found.");
 
         var user = _context.Users.Find(userId);
-        if (!AuthHelper.IsUserAuthorizedForTask(task, user, checkOwnership: true))
+        if (!AuthHelper.IsTaskOwner(task, user))
             return Unauthorized("Only the task owner can update the task.");
 
         if (task.Task_Status == Task.TaskStatus.Completed || task.Task_Status == Task.TaskStatus.Rejected)
@@ -234,7 +245,7 @@ public class TaskController : ControllerBase
         if (task == null) return NotFound("Task not found.");
 
         var user = _context.Users.Find(userId);
-        if (!AuthHelper.IsUserAuthorizedForTask(task, user, checkOwnership: true))
+        if (!AuthHelper.IsTaskOwner(task, user))
             return Unauthorized("Only the task owner can delete the task.");
 
         task.Deleted_At = DateTime.UtcNow;

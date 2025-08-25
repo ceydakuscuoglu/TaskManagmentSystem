@@ -11,9 +11,9 @@ public abstract class BaseEntity
 
     public DateTime? Created_At { get; set; } = DateTime.UtcNow;
     public DateTime? Updated_At { get; set; } = DateTime.UtcNow;
-    public DateTime? Deleted_At { get; set; }
-    public Guid? Created_By { get; set; }
-    public Guid? Updated_By { get; set; }
-    public Guid? Deleted_By { get; set; }
+    public DateTime? Deleted_At { get; set; } = null;
+    public Guid? Created_By { get; set; } = null;
+    public Guid? Updated_By { get; set; } = null;
+    public Guid? Deleted_By { get; set; } = null;
 
 }
