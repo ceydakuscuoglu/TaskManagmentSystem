@@ -65,7 +65,9 @@ public class TaskController : ControllerBase
     public IActionResult ListCompletedTasks() // List completed tasks
     {
         var completedTasks = _context.Tasks
-            .Where(t => t.Task_Status == Task.TaskStatus.Completed)
+            .Where(t => t.Task_Status == Task.TaskStatus.Completed
+                     && t.Approved_At.HasValue
+                     && t.Completed_At.HasValue)
             .Select(t => new
             {
                 t.ID,
@@ -73,13 +75,15 @@ public class TaskController : ControllerBase
                 t.Description,
                 TaskStatus = t.Task_Status.ToString(),
                 AssignedUser = t.User.First_Name + " " + t.User.Last_Name,
-                CreatedBy = t.User.First_Name + " " + t.User.Last_Name,
                 DepartmentName = t.User.Department.Department_Name,
-                TotalTimeTaken = t.Approved_At.HasValue && t.Completed_At.HasValue
-    ? (t.Completed_At.Value - t.Approved_At.Value).Days + " day "
-        + (t.Completed_At.Value - t.Approved_At.Value).Hours + " hour "
-        + (t.Completed_At.Value - t.Approved_At.Value).Minutes + " minute"
-    : null
+                TotalTimeTaken = (t.Completed_At.Value - t.Approved_At.Value).Days + " day "
+                    + (t.Completed_At.Value - t.Approved_At.Value).Hours + " hour "
+                    + (t.Completed_At.Value - t.Approved_At.Value).Minutes + " minute",
+                CompletedBy = t.Updated_By != null
+                    ? _context.Users.Where(u => u.ID == t.Updated_By)
+                        .Select(u => u.First_Name + " " + u.Last_Name)
+                        .FirstOrDefault()
+                    : null
             })
             .ToList();
         return Ok(completedTasks);
