@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TaskManagmentSystem.Data;
 using Microsoft.OpenApi.Models;
+using TaskManagmentSystem.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,6 +27,10 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1"
     });
 });
+
+// Email
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddTransient<IEmailSender, ConsoleEmailSender>();
 
 var app = builder.Build();
 
