@@ -30,7 +30,7 @@ builder.Services.AddSwaggerGen(c =>
 
 // Email
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
-builder.Services.AddTransient<IEmailSender, ConsoleEmailSender>();
+builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
 
 var app = builder.Build();
 

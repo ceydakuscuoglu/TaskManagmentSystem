@@ -13,7 +13,10 @@ public class Task : BaseEntity
 
     public TaskStatus Task_Status { get; set; }
 
+    [JsonIgnore]
     public DateTime? Approved_At { get; set; } = null;
+
+    [JsonIgnore]
     public DateTime? Completed_At { get; set; } = null;
 
     public enum TaskStatus

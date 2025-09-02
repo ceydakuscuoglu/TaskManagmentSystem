@@ -113,10 +113,20 @@ public class TaskController : ControllerBase
     }
 
     [HttpPost("create")]
-    public IActionResult CreateTask(TaskEntity task, Guid currentUserId) // Create a new task
+    public async Task<IActionResult> CreateTask([FromBody] TaskEntity task, Guid currentUserId) // Create a new task
     {
         if (currentUserId == Guid.Empty)
             return BadRequest("Current user ID cannot be null or empty.");
+
+        if (task == null)
+            return BadRequest("Task payload is required.");
+
+        if (task.AssignedToUserID == Guid.Empty)
+            return BadRequest("Assignee user ID (AssignedToUserID) is required.");
+
+        var assigneeExists = _context.Users.Any(u => u.ID == task.AssignedToUserID);
+        if (!assigneeExists)
+            return NotFound("Assignee user not found.");
 
         task.Task_Status = TaskEntity.TaskStatus.Pending;
         task.Created_By = currentUserId;
@@ -124,7 +134,36 @@ public class TaskController : ControllerBase
 
         _context.Tasks.Add(task);
         _context.SaveChanges();
+        await SendAssignmentEmailAsync(task);
         return Ok("Task created successfully.");
+    }
+
+    private async Task SendAssignmentEmailAsync(TaskEntity task)
+    {
+        try
+        {
+            var assignee = _context.Users
+                .Where(u => u.ID == task.AssignedToUserID)
+                .Select(u => new { u.Email, u.First_Name, u.Last_Name })
+                .FirstOrDefault();
+            if (assignee == null)
+            {
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(assignee.Email))
+            {
+                return;
+            }
+
+            var title = task.Task_Title ?? "Task";
+            var subject = $"New task assigned: {title}";
+            var body = $"Hello {assignee.First_Name} {assignee.Last_Name}, you have been assigned a new task: '{title}'.";
+            await _emailSender.SendEmailAsync(assignee.Email, subject, body);
+        }
+        catch (Exception ex)
+        {
+            // Swallow errors to avoid failing the API call due to email errors
+        }
     }
 
     [HttpPut("approve/{taskId}/{currentUser}")]
@@ -261,8 +300,8 @@ public class TaskController : ControllerBase
         if (task == null) return NotFound("Task not found.");
 
         var user = _context.Users.Find(userId);
-        if (!AuthHelper.IsTaskOwner(task, user))
-            return Unauthorized("Only the task owner can delete the task.");
+        if (!(AuthHelper.IsTaskOwner(task, user) || (user != null && task.AssignedToUserID == user.ID)))
+            return Unauthorized("Only the task owner or assignee can delete the task.");
 
         task.Deleted_At = DateTime.UtcNow;
         task.Deleted_By = userId;
@@ -311,3 +350,4 @@ public class TaskController : ControllerBase
         }
     }
 }
+

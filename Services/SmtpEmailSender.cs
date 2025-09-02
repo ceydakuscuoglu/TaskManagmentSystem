@@ -28,13 +28,11 @@ namespace TaskManagmentSystem.Services
                 using (var client = new SmtpClient(_settings.Host, _settings.Port))
                 {
                     client.EnableSsl = _settings.EnableSsl;
+                    // Avoid using domain default credentials with local test servers (e.g., Hotdog/MailHog)
+                    client.UseDefaultCredentials = false;
                     if (!string.IsNullOrWhiteSpace(_settings.Username))
                     {
                         client.Credentials = new NetworkCredential(_settings.Username, _settings.Password);
-                    }
-                    else
-                    {
-                        client.UseDefaultCredentials = true;
                     }
 
                     await client.SendMailAsync(message);
