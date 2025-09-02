@@ -1,0 +1,227 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Tasks";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h3 mb-0">Tasks</h1>
+    <div>
+        <a class="btn btn-primary" href="#" data-bs-toggle="modal" data-bs-target="#createModal">New Task</a>
+    </div>
+    </div>
+
+<div class="card">
+    <div class="card-body">
+        <form id="filterForm" class="row g-2 mb-3">
+            <div class="col-12 col-md-3">
+                <input type="text" class="form-control" name="taskTitle" placeholder="Search by title or description">
+            </div>
+            <div class="col-6 col-md-3">
+                <input type="text" class="form-control" name="assignedUserName" placeholder="Assigned user name">
+            </div>
+            <div class="col-6 col-md-3">
+                <input type="email" class="form-control" name="assignedUserEmail" placeholder="Assigned user email">
+            </div>
+            <div class="col-6 col-md-2">
+                <input type="text" class="form-control" name="departmentName" placeholder="Department">
+            </div>
+            <div class="col-6 col-md-1">
+                <button class="btn btn-outline-secondary w-100" type="submit">Filter</button>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Assignee</th>
+                        <th>Email</th>
+                        <th>Department</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tasksTbody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Create Task</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info">Select an assignee. You are the creator.</div>
+        <form id="createForm" class="vstack gap-2">
+            <input class="form-control" name="Task_Title" placeholder="Title" required>
+            <textarea class="form-control" name="Description" placeholder="Description" rows="3"></textarea>
+            <select class="form-select" name="AssignedToUserID" id="assigneeSelect" required></select>
+            <button type="submit" class="btn btn-primary">Create</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<script>
+    const tbody = document.getElementById('tasksTbody');
+    const form = document.getElementById('filterForm');
+    let currentUserId = null;
+
+    function toQuery(params){
+        const usp = new URLSearchParams();
+        Object.entries(params).forEach(([k,v])=>{ if(v) usp.set(k,v); });
+        return usp.toString();
+    }
+
+    async function loadTasks(filters={}){
+        tbody.innerHTML = `<tr><td colspan="6">Loading...</td></tr>`;
+        try{
+            const qs = toQuery(filters);
+            const data = await tms.fetchJson(`/api/Task/list${qs?`?${qs}`:''}`);
+            if(!data.length){
+                tbody.innerHTML = `<tr><td colspan="6" class="text-muted">No tasks found</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = data.map(t=>`
+                <tr>
+                    <td>${t.task_Title ?? ''}</td>
+                    <td>
+                        <select class="form-select form-select-sm w-auto" onchange="return changeStatus('${t.id}', '${t.taskStatus}', this.value)">
+                            ${renderStatusOptions(t.taskStatus)}
+                        </select>
+                    </td>
+                    <td>${t.assignedUser ?? ''}</td>
+                    <td>${t.assignedUserEmail ?? ''}</td>
+                    <td>${t.departmentName ?? ''}</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary me-1" href="/tasks/${t.id}">Detail</a>
+                        ${canDelete(t) ? `<button class=\"btn btn-sm btn-outline-danger\" onclick=\"return doAction('delete','${t.id}')\">Delete</button>` : ''}
+                    </td>
+                </tr>`).join('');
+        }catch(e){
+            tbody.innerHTML = `<tr><td colspan="6" class="text-danger">Failed to load tasks</td></tr>`;
+        }
+    }
+
+    form.addEventListener('submit', (e)=>{
+        e.preventDefault();
+        const fd = new FormData(form);
+        const filters = Object.fromEntries(fd.entries());
+        loadTasks(filters);
+    });
+
+    document.getElementById('createForm').addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const payload = {
+            Task_Title: fd.get('Task_Title'),
+            Description: fd.get('Description'),
+            AssignedToUserID: fd.get('AssignedToUserID')
+        };
+        try{
+            const res = await fetch(`/api/Task/create?currentUserId=${encodeURIComponent(currentUserId)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if(!res.ok){
+                const txt = await res.text();
+                alert('Create failed: ' + txt);
+                return;
+            }
+            bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
+            loadTasks();
+        }catch(err){
+            alert('Create failed');
+        }
+    });
+
+    async function loadCurrentUser(){
+        // NameIdentifier is stored as user claim and not directly exposed; add a minimal endpoint if needed.
+        // For now, call /api/User/all and pick the first matching by email claim.
+        const email = '@User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")?.Value';
+        if(!email){ return; }
+        const users = await tms.fetchJson('/api/User/all');
+        const me = users.find(u => u.email?.toLowerCase() === email.toLowerCase());
+        currentUserId = me?.id ?? null;
+    }
+
+    async function loadAssignees(){
+        const users = await tms.fetchJson('/api/User/all');
+        const sel = document.getElementById('assigneeSelect');
+        sel.innerHTML = '<option value="" disabled selected>Select assignee</option>' + users.map(u=>`<option value="${u.id}">${u.fullName}</option>`).join('');
+    }
+
+    async function doAction(kind, id){
+        try{
+            if(!currentUserId){ alert('Current user not resolved. Re-login.'); return false; }
+            let url = '';
+            let method = 'PUT';
+            if(kind==='approve') url = `/api/Task/approve/${id}/${currentUserId}`;
+            else if(kind==='reject') url = `/api/Task/reject/${id}/${currentUserId}`;
+            else if(kind==='complete') url = `/api/Task/complete/${id}/${currentUserId}`;
+            else if(kind==='delete'){ url = `/api/Task/delete/${id}/${currentUserId}`; method = 'DELETE'; }
+            const res = await fetch(url, { method });
+            if(!res.ok){ const t = await res.text(); alert(t||'Action failed'); return false; }
+            loadTasks();
+        }catch(e){ alert('Action failed'); }
+        return false;
+    }
+
+    function renderStatusOptions(current){
+        // Allowed transitions per API rules:
+        // Pending -> Approved, Rejected
+        // Approved -> Completed
+        // Rejected, Completed -> no change
+        const statuses = ['Pending','Approved','Rejected','Completed'];
+        const allowed = new Set([
+            current === 'Pending' ? ['Pending','Approved','Rejected'] :
+            current === 'Approved' ? ['Approved','Completed'] :
+            [current]
+        ].flat());
+        return statuses
+            .filter(s => allowed.has(s))
+            .map(s => `<option value="${s}" ${s===current?'selected':''}>${s}</option>`) 
+            .join('');
+    }
+
+    async function changeStatus(id, fromStatus, toStatus){
+        if(fromStatus === toStatus) return false;
+        if(!currentUserId){ alert('Current user not resolved. Re-login.'); return false; }
+        let action = null;
+        if(fromStatus === 'Pending' && toStatus === 'Approved') action = 'approve';
+        else if(fromStatus === 'Pending' && toStatus === 'Rejected') action = 'reject';
+        else if(fromStatus === 'Approved' && toStatus === 'Completed') action = 'complete';
+        else {
+            alert('This status change is not allowed.');
+            loadTasks();
+            return false;
+        }
+        await doAction(action, id);
+        return false;
+    }
+
+    (async ()=>{
+        await loadCurrentUser();
+        await loadAssignees();
+        await loadTasks();
+    })();
+
+    function canDelete(t){
+        if(!currentUserId) return false; // not logged in -> no delete
+        return (t.createdById && t.createdById.toLowerCase() === currentUserId?.toLowerCase())
+            || (t.assigneeId && t.assigneeId.toLowerCase() === currentUserId?.toLowerCase());
+    }
+</script>
+}
+
+

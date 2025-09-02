@@ -164,3 +164,8 @@ C:\Users\ceyda\OneDrive\Masaüstü\TaskManagmentSystem\TaskManagmentSystem\bin\D
 C:\Users\ceyda\OneDrive\Masaüstü\TaskManagmentSystem\TaskManagmentSystem\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerGen.dll
 C:\Users\ceyda\OneDrive\Masaüstü\TaskManagmentSystem\TaskManagmentSystem\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerUI.dll
 C:\Users\ceyda\OneDrive\Masaüstü\TaskManagmentSystem\TaskManagmentSystem\obj\Debug\net9.0\TaskManagmentSystem.sourcelink.json
+C:\Users\ceyda\OneDrive\Masaüstü\TaskManagmentSystem\TaskManagmentSystem\bin\Debug\net9.0\TaskManagmentSystem.staticwebassets.runtime.json
+C:\Users\ceyda\OneDrive\Masaüstü\TaskManagmentSystem\TaskManagmentSystem\obj\Debug\net9.0\TaskManagmentSystem.RazorAssemblyInfo.cache
+C:\Users\ceyda\OneDrive\Masaüstü\TaskManagmentSystem\TaskManagmentSystem\obj\Debug\net9.0\TaskManagmentSystem.RazorAssemblyInfo.cs
+C:\Users\ceyda\OneDrive\Masaüstü\TaskManagmentSystem\TaskManagmentSystem\obj\Debug\net9.0\compressed\0ysclhm435-rsk25gwx6s.gz
+C:\Users\ceyda\OneDrive\Masaüstü\TaskManagmentSystem\TaskManagmentSystem\obj\Debug\net9.0\compressed\2hlpax4l1y-dvu8q2xh4a.gz

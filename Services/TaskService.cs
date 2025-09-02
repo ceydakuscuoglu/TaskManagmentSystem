@@ -59,7 +59,9 @@ public class TaskController : ControllerBase
             AssignedUser = t.User.First_Name + " " + t.User.Last_Name,
             AssignedUserEmail = t.User.Email,
             DepartmentName = t.User.Department.Department_Name,
-            CreatedBy = t.User.First_Name + " " + t.User.Last_Name
+            CreatedBy = t.User.First_Name + " " + t.User.Last_Name,
+            AssigneeId = t.AssignedToUserID,
+            CreatedById = t.Created_By
         }).ToList();
 
         return Ok(tasks);

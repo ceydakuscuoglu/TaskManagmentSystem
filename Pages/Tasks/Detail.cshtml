@@ -1,0 +1,30 @@
+@page "/tasks/{id}"
+@model TaskDetailModel
+@{
+    ViewData["Title"] = "Task Detail";
+}
+
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <h1 class="h4 mb-1">@Model.Task?.Task_Title</h1>
+            <span class="badge bg-secondary">@Model.Task?.TaskStatus</span>
+        </div>
+        <a class="btn btn-outline-secondary" asp-page="/Index">Back</a>
+    </div>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-3">Assigned To</dt>
+        <dd class="col-sm-9">@Model.Task?.AssignedTo</dd>
+
+        <dt class="col-sm-3">Department</dt>
+        <dd class="col-sm-9">@Model.Task?.Department</dd>
+
+        <dt class="col-sm-3">Description</dt>
+        <dd class="col-sm-9">@Model.Task?.Description</dd>
+    </dl>
+  </div>
+</div>
+
+

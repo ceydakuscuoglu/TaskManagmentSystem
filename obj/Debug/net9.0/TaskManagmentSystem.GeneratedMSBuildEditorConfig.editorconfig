@@ -27,3 +27,31 @@ build_property.MSBuildProjectDirectory = C:\Users\ceyda\OneDrive\Masaüstü\Task
 build_property._RazorSourceGeneratorDebug = 
 build_property.EffectiveAnalysisLevelStyle = 9.0
 build_property.EnableCodeStyleSeverity = 
+
+[C:/Users/ceyda/OneDrive/Masaüstü/TaskManagmentSystem/TaskManagmentSystem/Pages/Auth/Login.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQXV0aFxMb2dpbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ceyda/OneDrive/Masaüstü/TaskManagmentSystem/TaskManagmentSystem/Pages/Auth/Logout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQXV0aFxMb2dvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ceyda/OneDrive/Masaüstü/TaskManagmentSystem/TaskManagmentSystem/Pages/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ceyda/OneDrive/Masaüstü/TaskManagmentSystem/TaskManagmentSystem/Pages/Shared/_Layout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2hhcmVkXF9MYXlvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ceyda/OneDrive/Masaüstü/TaskManagmentSystem/TaskManagmentSystem/Pages/Tasks/Detail.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVGFza3NcRGV0YWlsLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ceyda/OneDrive/Masaüstü/TaskManagmentSystem/TaskManagmentSystem/Pages/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/ceyda/OneDrive/Masaüstü/TaskManagmentSystem/TaskManagmentSystem/Pages/_ViewStart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcX1ZpZXdTdGFydC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
